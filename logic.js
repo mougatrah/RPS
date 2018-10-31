@@ -1,3 +1,5 @@
+
+$(document).ready(function(){
 // var config = {
 //     apiKey: "AIzaSyDm8cfSHDjdhjYkxO77oQqOM9RNxvZ1eVg",
 //     authDomain: "rpsgame-47199.firebaseapp.com",
@@ -9,23 +11,135 @@
 //   firebase.initializeApp(config);
 //   database = firebase.database();
 
-$(document).ready(function(){
-
     var game = {
-        elements: ["rock", "paper", "scissors"],
+        elements: {
+            rock: "bg-primary",
+            paper: "bg-danger",
+            scissors: "bg-success",
+            default: "bg-secondary"
+        },
+        playerDiv: $("#playerDiv"),
+        opponentDiv: $("#opponentDiv"),
+        winnerText: $("#winner"),
+        playerHasChosen: false,
+        opponentHasChosen:false,
         player1: {
-            name: "",
-            choice: ""
+            name: "Player",
+            choice: "",
+            wins: 0,
+            losses: 0,
+            ties: 0
         },
         player2: {
-            name: "", 
+            name: "CPU", 
             choice: ""
-        }
+        },
 
-        resizeTo()
+        reset(){
+
+            game.player1.choice ="";
+            game.playerHasChosen = false;
+            game.opponentHasChosen = false;
+            game.winnerText.text("");
+            game.playerDiv.removeClass("bg-primary bg-danger bg-success");
+            game.playerDiv.addClass(game.elements.default);
+            game.opponentDiv.removeClass("bg-primary bg-danger bg-success");
+            game.opponentDiv.addClass(game.elements.default)
+        },
+
+        update(value){
+            
+            if(!game.playerHasChosen){
+                console.log("Player 1 chose " + value)
+                game.playerDiv.removeClass("bg-secondary");
+                game.playerDiv.addClass(game.elements[value]);
+                game.player1.choice = value;
+                game.playerHasChosen = true;
+            }else if(game.playerHasChosen && !game.opponentHasChosen){
+                console.log("Player 2 chose " + value);
+                game.opponentDiv.removeClass("bg-secondary");
+                game.opponentDiv.addClass(game.elements[value]);
+                game.player2.choice = value;
+                game.opponentHasChosen = true;
+                setTimeout(game.update, 1000);
+            }else if(game.playerHasChosen && game.opponentHasChosen){
+                var result = game.calc(game.player1.choice, game.player2.choice)
+                console.log(result);
+                this.winnerText.text(result);
+                setTimeout(game.reset, 5000);
+            }
+
+
+          
+        },  
+
+        
+
+        calc(playerChoice, opponentChoice ){
+        
+
+            var outcome = "DEFAULT";
+
+            if(playerChoice == opponentChoice){
+                outcome = "Tie";
+                game.player1.ties++;
+            }
+
+            switch(playerChoice){
+                case "rock":
+                switch(opponentChoice){
+                    case "paper":
+                    outcome = game.player2.name;
+                    game.player1.losses++;
+                    break;
+                    case "scissors":
+                    outcome = game.player1.name;
+                    game.player1.wins++;
+                    break;
+                }
+                break;
+                case "paper":
+                switch(opponentChoice){
+                    case "scissors":
+                    outcome = game.player1.name;
+                    game.player1.losses++;
+                    break;
+                    case "rock":
+                    outcome = game.player1.name;
+                    game.player1.wins++;
+                    break;
+                }
+                break;
+                case "scissors":
+                switch(opponentChoice){
+                    case "rock":
+                    outcome = game.player2.name;
+                    game.player1.losses++;
+                    break;
+                    case "paper":
+                    outcome = game.player1.name;
+                    game.player1.wins++;
+                    break;
+                }
+                break;
+                default:
+                outcome = "BLEP";
+                break;
+            }
+
+            return outcome;
+        }
 
         
     }
 
+    $(".element").click(function(e){
+        e.preventDefault();
 
+        game.update($(this).attr("data-value"));
+    });
+    game.reset();
+
+
+  
 });
