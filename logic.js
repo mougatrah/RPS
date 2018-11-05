@@ -11,35 +11,8 @@ $(document).ready(function () {
     };
     firebase.initializeApp(config);
 
-    var provider = new firebase.auth.GoogleAuthProvider();
-
-    firebase.auth().signInWithPopup(provider).then(function (result) {
-        // This gives you a Google Access Token. You can use it to access the Google API.
-        var token = result.credential.accessToken;
-        // The signed-in user info.
-        console.log("SIGN IN " + result)
-        game.player1.name = result.user;
-        // ...
-    }).catch(function (error) {
-        // Handle Errors here.
-        console.log(error);
-    });
 
     database = firebase.database();
-
-    database.ref().on("value", function (snap) {
-
-        console.log(snap.val().Users.PlayerOne) 
-        game.player1.name = snap.val().Users.PlayerOne.name;
-        console.log(game.player1.name)
-        game.reset();
-        if (snap.val().Users.PlayerTwo.hasChosen) {
-
-
-        }
-
-
-    });
 
     var game = {
         elements: {
@@ -48,6 +21,8 @@ $(document).ready(function () {
             scissors: "bg-success",
             default: "bg-secondary"
         },
+        playerId: "",
+        sessionId: "",
         playerDiv: $("#playerDiv"),
         opponentDiv: $("#opponentDiv"),
         winnerText: $("#winner"),
@@ -55,19 +30,22 @@ $(document).ready(function () {
         opponentHasChosen: false,
         gameOver: false,
         player1: {
-            name: "",
-            choice: "",
+            choice: "rock",
             wins: 0,
             losses: 0,
             ties: 0
         },
         player2: {
-            name: "CPU",
             choice: ""
         },
 
         reset() {
             $("#playerName").text(game.player1.name)
+
+            connectionsRef.child(game.playerId).update({
+                choice: game.player1.choice,
+                hasChosen: game.playerHasChosen
+            })
             game.player1.choice = "";
             game.playerHasChosen = false;
             game.opponentHasChosen = false;
@@ -166,10 +144,58 @@ $(document).ready(function () {
 
     }
 
+
+    // connectionsRef references a specific location in our database.
+    // All of our connections will be stored in this directory.
+    var connectionsRef = database.ref("/connections");
+
+    // '.info/connected' is a special location provided by Firebase that is updated   
+    // the client's connection state changes.
+    // '.info/connected' is a boolean value, true if the client is connected and false if they are not.
+    var connectedRef = database.ref(".info/connected");
+
+    var sessionsRef = database.ref("/Sessions");
+    // When the client's connection state changes...
+    connectedRef.on("value", function (snap) {
+
+        // If they are connected..
+        if (snap.val()) {
+
+            // Add user to the connections list.
+            var con = connectionsRef.push({
+                inSession: false,
+                hasChosen: false,
+                choice: ""
+            });
+
+            // Remove user from the connection list when they disconnect.
+            con.onDisconnect().remove();
+
+            game.playerId = con.key;
+          
+        }
+    });
+   
+    connectionsRef.on("value", function (snap) {
+
+        console.log("SESSIN ")
+        for(let i in snap){
+            console.log(i);
+        }
+        // Display the viewer count in the htm  l.
+        // The number of online users is the number of children in the connections list.
+        //   $("#watchers").text(snap.numChildren());
+    });
+
+    
+
+
+
+
     $(".element").click(function (e) {
         e.preventDefault();
 
         game.update($(this).attr("data-value"));
     });
-        
+
 });
