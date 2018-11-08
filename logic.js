@@ -22,139 +22,145 @@ $(document).ready(function () {
             default: "bg-secondary"
         },
         playerId: "",
-        sessionId: "",
+        opponentId: "",
+        sessionJoined: false,
         playerDiv: $("#playerDiv"),
         opponentDiv: $("#opponentDiv"),
         winnerText: $("#winner"),
         playerHasChosen: false,
         opponentHasChosen: false,
         gameOver: false,
-        player1: {
-            choice: "rock",
-            wins: 0,
-            losses: 0,
-            ties: 0
-        },
-        player2: {
-            choice: ""
-        },
+        playerChoice: "",
+        opponentChoice: "",
+        wins: 0,
+        losses: 0,
+        ties: 0,
 
         reset() {
-            $("#playerName").text(game.player1.name)
 
-            connectionsRef.child(game.playerId).update({
-                choice: game.player1.choice,
-                hasChosen: game.playerHasChosen
-            })
-            game.player1.choice = "";
+            console.log("resetting");
+
+            game.playerChoice = "";
             game.playerHasChosen = false;
             game.opponentHasChosen = false;
+            
+            connectionsRef.child(game.playerId).update({
+                choice: game.playerChoice,
+                hasChosen: game.playerHasChosen,
+                inSession: game.sessionJoined
+            })
+
             game.gameOver = false;
+
             game.winnerText.text("");
             game.playerDiv.removeClass("bg-primary bg-danger bg-success");
             game.playerDiv.addClass(game.elements.default);
             game.opponentDiv.removeClass("bg-primary bg-danger bg-success");
             game.opponentDiv.addClass(game.elements.default)
-        },
+
+        }, 
+
 
         update(value) {
-            if (!game.gameOver) {
-                if (!game.playerHasChosen) {
-                    console.log("Player 1 chose " + value)
-                    game.playerDiv.removeClass("bg-secondary");
-                    game.playerDiv.addClass(game.elements[value]);
-                    game.player1.choice = value;
-                    game.playerHasChosen = true;
-                } else if (game.playerHasChosen && !game.opponentHasChosen) {
-                    console.log("Player 2 chose " + value);
-                    game.opponentDiv.removeClass("bg-secondary");
-                    game.opponentDiv.addClass(game.elements[value]);
-                    game.player2.choice = value;
-                    game.opponentHasChosen = true;
-                    setTimeout(game.update, 1000);
-                } else if (game.playerHasChosen && game.opponentHasChosen) {
-                    var result = game.calc(game.player1.choice, game.player2.choice)
-                    game.gameOver = true;
-                    console.log(result);
-                    game.winnerText.text(result);
-                    setTimeout(game.reset, 5000);
+
+
+            if (!game.gameOver && game.sessionJoined && !game.playerHasChosen) {
+
+                game.playerChoice = value;
+                game.playerHasChosen = true;
+
+                console.log("You chose: "+ value);
+                $("#")
+                connectionsRef.child(this.playerId).update({
+                    choice: game.playerChoice,
+                    hasChosen: game.playerHasChosen
+                });
+                if(!game.opponentHasChosen){
+                    console.log("Waiting for opponent's choice");
+                }else{
+                    game.calc();
                 }
+                
+               
 
             }
 
         },
 
+        calc() {
+            if (game.playerHasChosen && game.opponentHasChosen) {
 
+                console.log("Calculating");
+                var outcome = "DEFAULT";
+                connectionsRef.child(game.opponentId).once("value", function(snap){
+                    game.opponentChoice = snap.val().choice;
+                })
+                if (game.playerChoice == game.opponentChoice) {
+                    outcome = "Tie";
+                    game.ties++;
+                } else {
 
-        calc(playerChoice, opponentChoice) {
-
-
-            var outcome = "DEFAULT";
-
-            if (playerChoice == opponentChoice) {
-                outcome = "Tie";
-                game.player1.ties++;
-            }
-
-            switch (playerChoice) {
-                case "rock":
-                    switch (opponentChoice) {
-                        case "paper":
-                            outcome = game.player2.name;
-                            game.player1.losses++;
-                            break;
-                        case "scissors":
-                            outcome = game.player1.name;
-                            game.player1.wins++;
-                            break;
-                    }
-                    break;
-                case "paper":
-                    switch (opponentChoice) {
-                        case "scissors":
-                            outcome = game.player1.name;
-                            game.player1.losses++;
-                            break;
+                    switch (game.playerChoice) {
                         case "rock":
-                            outcome = game.player1.name;
-                            game.player1.wins++;
-                            break;
-                    }
-                    break;
-                case "scissors":
-                    switch (opponentChoice) {
-                        case "rock":
-                            outcome = game.player2.name;
-                            game.player1.losses++;
+                            switch (game.opponentChoice) {
+                                case "paper":
+                                    outcome = "You Lost";
+                                    game.losses++;
+                                    break;
+                                case "scissors":
+                                    outcome = "You Won";
+                                    game.wins++;
+                                    break;
+                            }
                             break;
                         case "paper":
-                            outcome = game.player1.name;
-                            game.player1.wins++;
+                            switch (game.opponentChoice) {
+                                case "scissors":
+                                    outcome = "You Lost";
+                                    game.losses++;
+                                    break;
+                                case "rock":
+                                    outcome = "You Won";
+                                    game.wins++;
+                                    break;
+                            }
+                            break;
+                        case "scissors":
+                            switch (game.opponentChoice) {
+                                case "rock":
+                                    outcome = "You Lost";;
+                                    game.losses++;
+                                    break;
+                                case "paper":
+                                    outcome = "You Won";
+                                    game.wins++;
+                                    break;
+                            }
+                            break;
+                        default:
+                            outcome = "BLEP";
                             break;
                     }
-                    break;
-                default:
-                    outcome = "BLEP";
-                    break;
-            }
 
-            return outcome;
+                }
+                console.log("Results: " + outcome);
+                $("#winner").text(outcome);
+                game.gameOver = true;
+                setTimeout(game.reset, 7000);
+             
+            }
         }
-
-
     }
 
 
     // connectionsRef references a specific location in our database.
     // All of our connections will be stored in this directory.
-    var connectionsRef = database.ref("/connections");
-
     // '.info/connected' is a special location provided by Firebase that is updated   
     // the client's connection state changes.
     // '.info/connected' is a boolean value, true if the client is connected and false if they are not.
+    var connectionsRef = database.ref("/connections");
     var connectedRef = database.ref(".info/connected");
-
-    var sessionsRef = database.ref("/Sessions");
+   
     // When the client's connection state changes...
     connectedRef.on("value", function (snap) {
 
@@ -171,23 +177,69 @@ $(document).ready(function () {
             // Remove user from the connection list when they disconnect.
             con.onDisconnect().remove();
 
+            console.log("You connected. Player Id: " + con.key);
             game.playerId = con.key;
-          
+
         }
     });
-   
-    connectionsRef.on("value", function (snap) {
 
-        console.log("SESSIN ")
-        for(let i in snap){
-            console.log(i);
+    connectionsRef.on("value", function (snap) {
+        if (game.sessionJoined == false) {
+            var result;
+            console.log("Searching for opponent");
+
+            snap.forEach(function (childsnap) {
+                if (childsnap.val().inSession == false && game.playerId != childsnap.key) {
+                    result = childsnap.key;
+                    return true;
+                }
+            });
+
+            if (result != undefined) {
+                console.log("Session joined. Opponent: " + result);
+                game.opponentId = result;
+                game.sessionJoined = true;
+
+                connectionsRef.child(game.playerId).update({
+                    inSession: game.sessionJoined
+                });
+
+                connectionsRef.child(result).on("value", function (snap) {
+                    if (snap.val()) {
+
+                        game.opponentHasChosen = snap.val().hasChosen;
+                        if (game.opponentHasChosen) {
+                            console.log("Opponent has chosen.");
+                            if(!game.playerHasChosen){
+                                console.log("Please make a choice.")
+                            }else{
+                                game.calc();
+                            }
+                        }
+                    } else {
+
+                        game.opponentId = "";
+                        game.sessionJoined = false;
+                        connectionsRef.child(game.playerId).update({
+                            inSession: game.sessionJoined
+                        })
+                       
+                        console.log("Opponent has disconnected");
+                        game.reset();
+                    }
+                });
+
+            } else {
+                console.log("No opponent found.");
+            }
+
         }
         // Display the viewer count in the htm  l.
         // The number of online users is the number of children in the connections list.
         //   $("#watchers").text(snap.numChildren());
     });
 
-    
+
 
 
 
