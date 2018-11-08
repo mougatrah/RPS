@@ -68,9 +68,11 @@ $(document).ready(function () {
 
                 game.playerChoice = value;
                 game.playerHasChosen = true;
-
+                game.playerDiv.removeClass("bg-primary bg-danger bg-success bg-secondary");
+                game.playerDiv.addClass(game.elements[value]);
+              
                 console.log("You chose: "+ value);
-                $("#")
+                
                 connectionsRef.child(this.playerId).update({
                     choice: game.playerChoice,
                     hasChosen: game.playerHasChosen
@@ -95,6 +97,10 @@ $(document).ready(function () {
                 connectionsRef.child(game.opponentId).once("value", function(snap){
                     game.opponentChoice = snap.val().choice;
                 })
+
+                game.opponentDiv.removeClass("bg-primary bg-danger bg-success bg-secondary");
+                game.opponentDiv.addClass(game.elements[game.opponentChoice])
+    
                 if (game.playerChoice == game.opponentChoice) {
                     outcome = "Tie";
                     game.ties++;
