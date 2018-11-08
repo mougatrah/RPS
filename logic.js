@@ -9,6 +9,7 @@ $(document).ready(function () {
         storageBucket: "rpsgame-47199.appspot.com",
         messagingSenderId: "979956531596"
     };
+
     firebase.initializeApp(config);
 
 
@@ -16,17 +17,19 @@ $(document).ready(function () {
 
     var game = {
         elements: {
-            rock: "bg-primary",
-            paper: "bg-danger",
-            scissors: "bg-success",
-            default: "bg-secondary"
+            rock: "./rock.jpg",
+            paper: "./paper.jpg",
+            scissors: "./scissors.jpg",
+            default: "./default.jpg"
         },
+        messages: [],
         playerId: "",
         opponentId: "",
         sessionJoined: false,
         playerDiv: $("#playerDiv"),
         opponentDiv: $("#opponentDiv"),
         winnerText: $("#winner"),
+        messageText: $("#message"),
         playerHasChosen: false,
         opponentHasChosen: false,
         gameOver: false,
@@ -36,14 +39,29 @@ $(document).ready(function () {
         losses: 0,
         ties: 0,
 
+        displayMessages(text) {
+          
+                if (game.messages.length > 2) {
+                    game.messages.shift();
+                }
+                game.messages.push(text);
+
+                game.messageText.html("");
+
+                for (let m in game.messages) {
+                    game.messageText.append($("<li>").text(game.messages[m]));
+                }
+            
+        },
+
         reset() {
 
-            console.log("resetting");
+            game.displayMessages("Resetting...");
 
             game.playerChoice = "";
             game.playerHasChosen = false;
             game.opponentHasChosen = false;
-            
+
             connectionsRef.child(game.playerId).update({
                 choice: game.playerChoice,
                 hasChosen: game.playerHasChosen,
@@ -53,12 +71,12 @@ $(document).ready(function () {
             game.gameOver = false;
 
             game.winnerText.text("");
-            game.playerDiv.removeClass("bg-primary bg-danger bg-success");
-            game.playerDiv.addClass(game.elements.default);
-            game.opponentDiv.removeClass("bg-primary bg-danger bg-success");
-            game.opponentDiv.addClass(game.elements.default)
+            
+            game.playerDiv.attr("src", game.elements.default);
+    
+            game.opponentDiv.attr("src", game.elements.default)
 
-        }, 
+        },
 
 
         update(value) {
@@ -68,39 +86,42 @@ $(document).ready(function () {
 
                 game.playerChoice = value;
                 game.playerHasChosen = true;
-                game.playerDiv.removeClass("bg-primary bg-danger bg-success bg-secondary");
-                game.playerDiv.addClass(game.elements[value]);
-              
-                console.log("You chose: "+ value);
-                
+             
+                game.playerDiv.attr("src" , game.elements[value]);
+
+                game.displayMessages("You chose: " + value);
+
                 connectionsRef.child(this.playerId).update({
                     choice: game.playerChoice,
                     hasChosen: game.playerHasChosen
                 });
-                if(!game.opponentHasChosen){
-                    console.log("Waiting for opponent's choice");
-                }else{
+                if (!game.opponentHasChosen) {
+                    game.displayMessages("Waiting for opponent's choice...");
+                } else {
                     game.calc();
                 }
-                
-               
+
+
 
             }
 
+        },
+        updateScore(){
+            $("#score").text("Wins: " + game.wins + " Losses: " + game.losses + " Ties: " + game.ties);
         },
 
         calc() {
             if (game.playerHasChosen && game.opponentHasChosen) {
 
-                console.log("Calculating");
+                game.displayMessages("Calculating...");
                 var outcome = "DEFAULT";
-                connectionsRef.child(game.opponentId).once("value", function(snap){
+                connectionsRef.child(game.opponentId).once("value", function (snap) {
                     game.opponentChoice = snap.val().choice;
                 })
 
-                game.opponentDiv.removeClass("bg-primary bg-danger bg-success bg-secondary");
-                game.opponentDiv.addClass(game.elements[game.opponentChoice])
-    
+               
+                game.opponentDiv.attr("src", game.elements[game.opponentChoice])
+
                 if (game.playerChoice == game.opponentChoice) {
                     outcome = "Tie";
                     game.ties++;
@@ -110,11 +131,11 @@ $(document).ready(function () {
                         case "rock":
                             switch (game.opponentChoice) {
                                 case "paper":
-                                    outcome = "You Lost";
+                                    outcome = "Lost";
                                     game.losses++;
                                     break;
                                 case "scissors":
-                                    outcome = "You Won";
+                                    outcome = "Won";
                                     game.wins++;
                                     break;
                             }
@@ -122,11 +143,11 @@ $(document).ready(function () {
                         case "paper":
                             switch (game.opponentChoice) {
                                 case "scissors":
-                                    outcome = "You Lost";
+                                    outcome = "Lost";
                                     game.losses++;
                                     break;
                                 case "rock":
-                                    outcome = "You Won";
+                                    outcome = "Won";
                                     game.wins++;
                                     break;
                             }
@@ -134,11 +155,11 @@ $(document).ready(function () {
                         case "scissors":
                             switch (game.opponentChoice) {
                                 case "rock":
-                                    outcome = "You Lost";;
+                                    outcome = "Lost";;
                                     game.losses++;
                                     break;
                                 case "paper":
-                                    outcome = "You Won";
+                                    outcome = "Won";
                                     game.wins++;
                                     break;
                             }
@@ -149,11 +170,12 @@ $(document).ready(function () {
                     }
 
                 }
-                console.log("Results: " + outcome);
+                game.displayMessages("Results: " + outcome);
+                game.updateScore();
                 $("#winner").text(outcome);
                 game.gameOver = true;
-                setTimeout(game.reset, 7000);
-             
+                setTimeout(game.reset, 5000);
+
             }
         }
     }
@@ -166,7 +188,7 @@ $(document).ready(function () {
     // '.info/connected' is a boolean value, true if the client is connected and false if they are not.
     var connectionsRef = database.ref("/connections");
     var connectedRef = database.ref(".info/connected");
-   
+
     // When the client's connection state changes...
     connectedRef.on("value", function (snap) {
 
@@ -183,7 +205,8 @@ $(document).ready(function () {
             // Remove user from the connection list when they disconnect.
             con.onDisconnect().remove();
 
-            console.log("You connected. Player Id: " + con.key);
+            game.displayMessages("You connected. Player Id: " + con.key);
+            game.updateScore();
             game.playerId = con.key;
 
         }
@@ -192,7 +215,7 @@ $(document).ready(function () {
     connectionsRef.on("value", function (snap) {
         if (game.sessionJoined == false) {
             var result;
-            console.log("Searching for opponent");
+            game.displayMessages("Searching for opponent...");
 
             snap.forEach(function (childsnap) {
                 if (childsnap.val().inSession == false && game.playerId != childsnap.key) {
@@ -202,7 +225,7 @@ $(document).ready(function () {
             });
 
             if (result != undefined) {
-                console.log("Session joined. Opponent: " + result);
+                game.displayMessages("Session joined. Opponent: " + result);
                 game.opponentId = result;
                 game.sessionJoined = true;
 
@@ -215,10 +238,10 @@ $(document).ready(function () {
 
                         game.opponentHasChosen = snap.val().hasChosen;
                         if (game.opponentHasChosen) {
-                            console.log("Opponent has chosen.");
-                            if(!game.playerHasChosen){
-                                console.log("Please make a choice.")
-                            }else{
+                            game.displayMessages("Opponent has chosen.");
+                            if (!game.playerHasChosen) {
+                                game.displayMessages("Please make a choice.")
+                            } else {
                                 game.calc();
                             }
                         }
@@ -229,14 +252,14 @@ $(document).ready(function () {
                         connectionsRef.child(game.playerId).update({
                             inSession: game.sessionJoined
                         })
-                       
-                        console.log("Opponent has disconnected");
+
+                        game.displayMessages("Opponent has disconnected");
                         game.reset();
                     }
                 });
 
             } else {
-                console.log("No opponent found.");
+                game.displayMessages("No opponent found.");
             }
 
         }
