@@ -40,18 +40,18 @@ $(document).ready(function () {
         ties: 0,
 
         displayMessages(text) {
-          
-                if (game.messages.length > 2) {
-                    game.messages.shift();
-                }
-                game.messages.push(text);
 
-                game.messageText.html("");
+            if (game.messages.length > 2) {
+                game.messages.shift();
+            }
+            game.messages.push(text);
 
-                for (let m in game.messages) {
-                    game.messageText.append($("<li>").text(game.messages[m]));
-                }
-            
+            game.messageText.html("");
+
+            for (let m in game.messages) {
+                game.messageText.append($("<li>").text(game.messages[m]));
+            }
+
         },
 
         reset() {
@@ -71,9 +71,9 @@ $(document).ready(function () {
             game.gameOver = false;
 
             game.winnerText.text("");
-            
+
             game.playerDiv.attr("src", game.elements.default);
-    
+
             game.opponentDiv.attr("src", game.elements.default)
 
         },
@@ -86,8 +86,8 @@ $(document).ready(function () {
 
                 game.playerChoice = value;
                 game.playerHasChosen = true;
-             
-                game.playerDiv.attr("src" , game.elements[value]);
+
+                game.playerDiv.attr("src", game.elements[value]);
 
                 game.displayMessages("You chose: " + value);
 
@@ -106,8 +106,8 @@ $(document).ready(function () {
             }
 
         },
-        updateScore(){
-            $("#score").text("Wins: " + game.wins + " Losses: " + game.losses + " Ties: " + game.ties);
+        updateScore() {
+            $("#score").html("<small> Wins: " + game.wins + "<br> Losses: " + game.losses + "<br> Ties: " + game.ties + "</div>");
         },
 
         calc() {
@@ -119,7 +119,7 @@ $(document).ready(function () {
                     game.opponentChoice = snap.val().choice;
                 })
 
-               
+
                 game.opponentDiv.attr("src", game.elements[game.opponentChoice])
 
                 if (game.playerChoice == game.opponentChoice) {
@@ -225,7 +225,7 @@ $(document).ready(function () {
             });
 
             if (result != undefined) {
-                game.displayMessages("Session joined. Opponent: " + result);
+                game.displayMessages("Session joined. Please select your move.");
                 game.opponentId = result;
                 game.sessionJoined = true;
 
@@ -265,7 +265,7 @@ $(document).ready(function () {
         }
         // Display the viewer count in the htm  l.
         // The number of online users is the number of children in the connections list.
-        //   $("#watchers").text(snap.numChildren());
+        $("#watchers").text(snap.numChildren());
     });
 
 
