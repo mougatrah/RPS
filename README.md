@@ -8,7 +8,7 @@ Built with jQuery and a Firebase database.
 
 1. Go to https://mougatrah.github.io/RPS
 
-2. Once 2 players or more are connected, you will be matched with an available playet.
+2. Once 2 players or more are connected, you will be matched with an available player.
 ![joining](./imgs/joining.png)
 
 3. Pick Rock, Paper or Scissors 
