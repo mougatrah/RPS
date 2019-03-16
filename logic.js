@@ -186,7 +186,7 @@ $(document).ready(function () {
     // '.info/connected' is a special location provided by Firebase that is updated   
     // the client's connection state changes.
     // '.info/connected' is a boolean value, true if the client is connected and false if they are not.
-    var connectionsRef = database.ref("/users");
+    var connectionsRef = database.ref("/connections");
     var connectedRef = database.ref(".info/connected");
 
     // When the client's connection state changes...
