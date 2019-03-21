@@ -22,6 +22,9 @@ $(document).ready(function () {
             scissors: "./scissors.jpg",
             default: "./default.jpg"
         },
+        con: null,
+        connectionsRef: null,
+        connectedRef: null,
         messages: [],
         playerId: "",
         opponentId: "",
@@ -30,6 +33,7 @@ $(document).ready(function () {
         opponentDiv: $("#opponentDiv"),
         winnerText: $("#winner"),
         messageText: $("#message"),
+        isSolo: $("#isSolo"),
         playerHasChosen: false,
         opponentHasChosen: false,
         gameOver: false,
@@ -81,7 +85,6 @@ $(document).ready(function () {
 
         update(value) {
 
-
             if (!game.gameOver && game.sessionJoined && !game.playerHasChosen) {
 
                 game.playerChoice = value;
@@ -91,7 +94,7 @@ $(document).ready(function () {
 
                 game.displayMessages("You chose: " + value);
 
-                connectionsRef.child(this.playerId).update({
+                game.connectionsRef.child(this.playerId).update({
                     choice: game.playerChoice,
                     hasChosen: game.playerHasChosen
                 });
@@ -177,98 +180,115 @@ $(document).ready(function () {
                 setTimeout(game.reset, 5000);
 
             }
+        },
+
+        connect() {
+            if (game.connectedRef && game.connectionsRef) {
+                game.connectionsRef.remove();
+                game.connectionsRef = null;
+                game.connectedRef = null;
+                game.displayMessages("Disconnecting...");
+            } else {
+                game.setup();
+            }
+        },
+
+        setup() {
+            // connectionsRef references a specific location in our database.
+            // All of our connections will be stored in game directory.
+            // '.info/connected' is a special location provided by Firebase that is updated   
+            // the client's connection state changes.
+            // '.info/connected' is a boolean value, true if the client is connected and false if they are not.
+            game.connectionsRef = database.ref("/connections");
+            game.connectedRef = database.ref(".info/connected");
+
+            // When the client's connection state changes...
+            game.connectedRef.on("value", function (snap) {
+
+                // If they are connected..
+                if (snap.val()) {
+
+                    // Add user to the connections list.
+                    game.con = game.connectionsRef.push({
+                        inSession: false,
+                        hasChosen: false,
+                        choice: ""
+                    });
+
+                    // Remove user from the connection list when they disconnect.
+                    game.con.onDisconnect().remove();
+
+                    game.displayMessages("You connected. Player Id: " + con.key);
+                    game.updateScore();
+                    game.playerId = con.key;
+
+                }
+            });
+
+            game.connectionsRef.on("value", function (snap) {
+                if (game.sessionJoined == false) {
+                    var result;
+                    game.displayMessages("Searching for opponent...");
+
+                    snap.forEach(function (childsnap) {
+                        if (childsnap.val().inSession == false && game.playerId != childsnap.key) {
+                            result = childsnap.key;
+                            return true;
+                        }
+                    });
+
+                    if (result != undefined) {
+                        game.displayMessages("Session joined. Please select your move.");
+                        game.opponentId = result;
+                        game.sessionJoined = true;
+
+                        game.connectionsRef.child(game.playerId).update({
+                            inSession: game.sessionJoined
+                        });
+
+                        game.connectionsRef.child(result).on("value", function (snap) {
+                            if (snap.val()) {
+
+                                game.opponentHasChosen = snap.val().hasChosen;
+                                if (game.opponentHasChosen) {
+                                    game.displayMessages("Opponent has chosen.");
+                                    if (!game.playerHasChosen) {
+                                        game.displayMessages("Please make a choice.")
+                                    } else {
+                                        game.calc();
+                                    }
+                                }
+                            } else {
+
+                                game.opponentId = "";
+                                game.sessionJoined = false;
+                                connectionsRef.child(game.playerId).update({
+                                    inSession: game.sessionJoined
+                                })
+
+                                game.displayMessages("Opponent has disconnected");
+                                game.reset();
+                            }
+                        });
+
+                    } else {
+                        game.displayMessages("No opponent found.");
+                    }
+
+                } 
+                // Display the viewer count in the htm  l.
+                // The number of online users is the number of children in the connections list.
+                $("#watchers").text(snap.numChildren());
+            });
         }
     }
 
 
-    // connectionsRef references a specific location in our database.
-    // All of our connections will be stored in this directory.
-    // '.info/connected' is a special location provided by Firebase that is updated   
-    // the client's connection state changes.
-    // '.info/connected' is a boolean value, true if the client is connected and false if they are not.
-    var connectionsRef = database.ref("/connections");
-    var connectedRef = database.ref(".info/connected");
-
-    // When the client's connection state changes...
-    connectedRef.on("value", function (snap) {
-
-        // If they are connected..
-        if (snap.val()) {
-
-            // Add user to the connections list.
-            var con = connectionsRef.push({
-                inSession: false,
-                hasChosen: false,
-                choice: ""
-            });
-
-            // Remove user from the connection list when they disconnect.
-            con.onDisconnect().remove();
-
-            game.displayMessages("You connected. Player Id: " + con.key);
-            game.updateScore();
-            game.playerId = con.key;
-
-        }
-    });
-
-    connectionsRef.on("value", function (snap) {
-        if (game.sessionJoined == false) {
-            var result;
-            game.displayMessages("Searching for opponent...");
-
-            snap.forEach(function (childsnap) {
-                if (childsnap.val().inSession == false && game.playerId != childsnap.key) {
-                    result = childsnap.key;
-                    return true;
-                }
-            });
-
-            if (result != undefined) {
-                game.displayMessages("Session joined. Please select your move.");
-                game.opponentId = result;
-                game.sessionJoined = true;
-
-                connectionsRef.child(game.playerId).update({
-                    inSession: game.sessionJoined
-                });
-
-                connectionsRef.child(result).on("value", function (snap) {
-                    if (snap.val()) {
-
-                        game.opponentHasChosen = snap.val().hasChosen;
-                        if (game.opponentHasChosen) {
-                            game.displayMessages("Opponent has chosen.");
-                            if (!game.playerHasChosen) {
-                                game.displayMessages("Please make a choice.")
-                            } else {
-                                game.calc();
-                            }
-                        }
-                    } else {
-
-                        game.opponentId = "";
-                        game.sessionJoined = false;
-                        connectionsRef.child(game.playerId).update({
-                            inSession: game.sessionJoined
-                        })
-
-                        game.displayMessages("Opponent has disconnected");
-                        game.reset();
-                    }
-                });
-
-            } else {
-                game.displayMessages("No opponent found.");
-            }
-
-        }
-        // Display the viewer count in the htm  l.
-        // The number of online users is the number of children in the connections list.
-        $("#watchers").text(snap.numChildren());
-    });
 
 
+    $("#isSolo").click(function (e) {
+        game.connect();
+    })
 
 
 
@@ -278,5 +298,5 @@ $(document).ready(function () {
 
         game.update($(this).attr("data-value"));
     });
-
+    game.setup();
 });
