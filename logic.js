@@ -228,6 +228,7 @@ $(document).ready(function () {
         connect() {
 
             if (game.con) {
+                console.log(game.user.uid)
                 userRef.child(game.user.uid).update({
                     wins: game.user.wins,
                     losses: game.user.losses,
@@ -380,11 +381,11 @@ $(document).ready(function () {
                     console.log(result);
                     if(result === undefined){
                         result = {
-                            displayName: authResult.user.displayName ? authResult.user.displayName : authResult.user.email.split("@").unshift(),                         
+                            displayName: authResult.user.displayName ? authResult.user.displayName : authResult.user.email.split("@").shift(),                         
+                            email: authResult.user.email,
                             wins: 0,
                             losses: 0,
-                            ties: 0,
-                            playing: true
+                            ties: 0
                         };
 
                         result.uid = userRef.push(result);
