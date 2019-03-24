@@ -14,12 +14,18 @@
         crossorigin="anonymous"></script>
     <script src="https://www.gstatic.com/firebasejs/5.5.7/firebase.js"></script>
     <script src="https://cdn.firebase.com/libs/firebaseui/3.1.1/firebaseui.js"></script>
+    <script type="text/javascript">
+        // FirebaseUI config.
+
+    </script>
     <link type="text/css" rel="stylesheet" href="https://cdn.firebase.com/libs/firebaseui/3.1.1/firebaseui.css" />
 </head>
 <style>
-    body, html {
+    body,
+    html {
         height: 100%;
     }
+
     img {
         margin: 1vh auto;
         height: auto;
@@ -33,52 +39,61 @@
 </style>
 
 <body class="bg-dark text-light">
+   <!-- <button class="float-left" id="login">Log in</button> -->
 
-    <div id="selectArea" class="container-fluid">
-        <div class="row text-center">
-            <div class="col-12">
-                <div># of players: <span id="watchers"></span> </div>
-                <input type="checkbox" id="isSolo" name="isSolo"
-                checked>
-                <h2>Choose your move</h2>
+    <div id="loginArea">
+            <div id="firebaseui-auth-container"></div>
+    </div>
+    <div id="gameArea">
+
+        <div id="selectArea" class="container-fluid">
+            <div class="row text-center">
+                <div class="col-12">
+                    <div># of players: <span id="watchers">n/a</span> </div>
+                    <form autocomplete="off">
+                        <label for="isSolo">Vs AI:</label>
+                        <input type="checkbox" id="isSolo" name="isSolo" checked>
+                    </form>
+                    <h2>Choose your move</h2>
+                </div>
+            </div>
+            <div id="selector" class="row justify-content-center">
+                <img data-value="rock" class="element col-6 col-md-4 col-lg-3" src="./rock.jpg"></img>
+            </div>
+            <div class="row justify-content-center">
+                <img data-value="paper" class="element col-6 col-sm-5 col-md-4 col-lg-3" src="./paper.jpg"></img>
+                <img data-value="scissors" class="element col-6 col-sm-5 col-md-4 col-lg-3" src="./scissors.jpg"></img>
+            </div>
+
+        </div>
+
+
+        <div id="battleArea" class="container-fluid">
+            <div class="row">
+                <div class="col-5 justify-content-center text-center">
+                    <h5 id="playerName">Player You</h5>
+                </div>
+                <div class="col-2 text-center">Vs.</div>
+                <div class="col-5 justify-content-center text-center">
+                    <h5>Player 2</h5>
+                </div>
+            </div>
+            <div class="row justify-content-center" style="height: 20vh;">
+                <img src="default.jpg" id="playerDiv" class="col-4 col-lg-3"></img>
+                <div class="">
+                    <span id="winner"></span>
+                    <div id="score"></div>
+
+                </div>
+                <img src="default.jpg" id="opponentDiv" class="col-4 col-lg-3"></img>
             </div>
         </div>
-        <div id="selector" class="row justify-content-center" >
-            <img data-value="rock" class="element col-6 col-md-4 col-lg-3"  src="./rock.jpg"></img>
-        </div>
-        <div class="row justify-content-center">
-            <img data-value="paper" class="element col-6 col-sm-5 col-md-4 col-lg-3" src="./paper.jpg"></img>
-            <img data-value="scissors" class="element col-6 col-sm-5 col-md-4 col-lg-3" src="./scissors.jpg"></img>
-        </div>
+        <h3>Console:</h3>
+        <ul id="message">
+
+        </ul>
 
     </div>
-    </div>
-
-    <div id="battleArea" class="container-fluid">
-        <div class="row">
-            <div class="col-5 justify-content-center text-center">
-                <h5 id="playerName">Player You</h5>
-            </div>
-            <div class="col-2 text-center">Vs.</div>
-            <div class="col-5 justify-content-center text-center">
-                <h5>Player 2</h5>
-            </div>
-        </div>
-        <div class="row justify-content-center" style="height: 20vh;">
-            <img src="default.jpg" id="playerDiv" class="col-4 col-lg-3"></img>
-            <div class="">
-                <span id="winner"></span>
-                <div id="score"></div>
-
-            </div>
-            <img src="default.jpg" id="opponentDiv" class="col-4 col-lg-3"></img>
-        </div>
-    </div>
-    <h3>Console:</h3>
-    <ul id="message">
-
-    </ul>
-
 
 
     <script src="logic.js"></script>
