@@ -54,7 +54,7 @@ $(document).ready(function () {
         gameOver: false,
         playerChoice: "",
         opponentChoice: "",
-    
+
         displayMessages(text) {
 
             if (game.messages.length > 3) {
@@ -94,9 +94,9 @@ $(document).ready(function () {
 
             game.opponentDiv.attr("src", game.elements.default)
 
-            if(game.sessionJoined || !game.con){
+            if (game.sessionJoined || !game.con) {
                 game.displayMessages("Please make a choice.")
-            }else{
+            } else {
                 game.displayMessages("Waiting for new opponent...")
             }
         },
@@ -138,10 +138,10 @@ $(document).ready(function () {
         },
 
         updateScore() {
-            if(game.con){
+            if (game.con) {
                 $("#score").html("<small> Wins: " + game.user.wins + " Losses: " + game.user.losses + " Ties: " + game.user.ties + "</div>");
 
-            }else{
+            } else {
                 $("#score").html("<small> AI Wins: " + game.AI.wins + " AI Losses: " + game.AI.losses + " AI Ties: " + game.AI.ties + "</div>");
             }
         },
@@ -165,9 +165,9 @@ $(document).ready(function () {
                 game.opponentDiv.attr("src", game.elements[game.opponentChoice])
 
                 var score;
-                if(game.con){
+                if (game.con) {
                     score = game.user;
-                }else{
+                } else {
                     score = game.AI;
                 }
                 if (game.playerChoice == game.opponentChoice) {
@@ -269,107 +269,109 @@ $(document).ready(function () {
 
         setup() {
             // When the client's connection state changes...
-        if(game.user.uid){
-            game.displayMessages("Connecting...")
-            userRef.child(game.user.uid).once("value", function(snap){
-                let { wins,losses, ties } = snap.val();
+            if (game.user.uid) {
+                game.displayMessages("Connecting...")
+                userRef.child(game.user.uid).once("value", function (snap) {
+                    let { wins, losses, ties } = snap.val();
                     game.user.wins = wins;
                     game.user.losses = losses;
                     game.user.ties = ties;
-                game.updateScore();
-            });
-
-            game.connectedRef.on("value", function (snap) {
-
-                // If they are connected..
-                if (snap.val()) {
-
-                    // Add user to the connections list.
-                    game.con = game.connectionsRef.push({
-                        user: game.user.uid,
-                        inSession: false,
-                        hasChosen: false,
-                        choice: ""
-                    });
-
-                    // Remove user from the connection list when they disconnect.
-                    game.con.onDisconnect().remove();
-
-                    game.displayMessages("You connected. Waiting for an opponent...");
                     game.updateScore();
-                    game.playerId = game.con.key;
+                });
 
-                }
-            });
+                game.connectedRef.on("value", function (snap) {
 
-            game.connectionsRef.on("value", function (snap) {
-                if (game.sessionJoined == false) {
-                    var result;
-                    game.displayMessages("Searching for opponent...");
+                    // If they are connected..
+                    if (snap.val()) {
 
-                    snap.forEach(function (childsnap) {
-                        if (childsnap.val().inSession == false && childsnap.val().user != game.user.uid && game.playerId != childsnap.key) {
-                            result = childsnap.key;
-                            return true;
-                        }
-                    });
-
-                    if (result != undefined) {
-                        game.opponentId = result;
-                        game.sessionJoined = true;
-
-                    if(game.con){
-                        game.connectionsRef.child(game.playerId).update({
-                            inSession: game.sessionJoined
+                        // Add user to the connections list.
+                        game.con = game.connectionsRef.push({
+                            user: game.user.uid,
+                            inSession: false,
+                            hasChosen: false,
+                            choice: ""
                         });
 
-                        game.connectionsRef.child(result).on("value", function (snap) {
-                            if (snap.val() && !game.isSolo.checked) {
+                        // Remove user from the connection list when they disconnect.
+                        game.con.onDisconnect().remove();
 
-                                game.opponentHasChosen = snap.val().hasChosen;
-                                if (game.opponentHasChosen) {
-                                    game.displayMessages("Opponent has chosen.");
-                                    if (!game.playerHasChosen) {
-                                        game.displayMessages("Please make a choice.")
-                                    } else {
-                                        game.calc();
-                                    }
-                                }
-                            } else {
+                        game.displayMessages("You connected. Waiting for an opponent...");
+                        game.updateScore();
+                        game.playerId = game.con.key;
 
-                                game.opponentId = "";
-                                game.sessionJoined = false;
-                               if(game.con){
-                                game.connectionsRef.child(game.playerId).update({
-                                    inSession: game.sessionJoined
-                                })
+                    }
+                });
 
-                               }
-                                game.displayMessages("Opponent has disconnected");
-                                game.reset();
-                            
+                game.connectionsRef.on("value", function (snap) {
+                    if (game.sessionJoined == false) {
+                        var result;
+                        game.displayMessages("Searching for opponent...");
 
+                        snap.forEach(function (childsnap) {
+                            if (childsnap.val().inSession == false && childsnap.val().user != game.user.uid && game.playerId != childsnap.key) {
+                                result = childsnap.key;
+                                return true;
                             }
                         });
 
-                    }
+                        if (result != undefined) {
+                            game.opponentId = result;
+                            game.sessionJoined = true;
+
+                            if (game.con) {
+                                game.connectionsRef.child(game.playerId).update({
+                                    console: "connected first",
+                                    inSession: game.sessionJoined
+                                });
+
+                                game.connectionsRef.child(result).on("value", function (snap) {
+                                    if (snap.val() && !game.isSolo.checked) {
+
+                                        game.opponentHasChosen = snap.val().hasChosen;
+                                        if (game.opponentHasChosen) {
+                                            game.displayMessages("Opponent has chosen.");
+                                            if (!game.playerHasChosen) {
+                                                game.displayMessages("Please make a choice.")
+                                            } else {
+                                                game.calc();
+                                            }
+                                        }
+                                    } else {
+
+                                        game.opponentId = "";
+                                        game.sessionJoined = false;
+                                        if (game.con) {
+                                            game.connectionsRef.child(game.playerId).update({
+                                                console: "disconnected",
+                                                inSession: game.sessionJoined
+                                            })
+
+                                        }
+                                        game.displayMessages("Opponent has disconnected");
+                                        game.reset();
+
+
+                                    }
+                                });
+
+                            }
                             game.displayMessages("Opponent found. Please make a choice.")
-                    } else {
-                        game.displayMessages("No opponent found.");
+                        } else {
+                            game.displayMessages("No opponent found.");
+                        }
+
                     }
+                    // Display the viewer count in the html.
+                    // The number of online users is the number of children in the connections list.
+                    $("#watchers").text(snap.numChildren());
+                });
 
-                }
-                // Display the viewer count in the html.
-                // The number of online users is the number of children in the connections list.
-                $("#watchers").text(snap.numChildren());
-            });
-
-        }else {
-            game.displayMessages("Can't connect. No user logged in...");
-            game.displayMessages("Playing the AI. Please make a choice.");
-            game.isSolo.click();
-            game.updateScore();
-        }
+            } else {
+                game.displayMessages("Can't connect. No user logged in...");
+                game.displayMessages("Playing the AI. Please make a choice.");
+                game.isSolo.click();
+                game.updateScore();
+            }
         }
     }
 
@@ -380,18 +382,18 @@ $(document).ready(function () {
                 // User successfully signed in.
                 // Return type determines whether we continue the redirect automatically
                 // or whether we leave that to developer to handle.
-                userRef.once("value", function(snap){
+                userRef.once("value", function (snap) {
                     var result;
-                    snap.forEach(function(childsnap) {
-                        if(childsnap.val().email === authResult.user.email){
+                    snap.forEach(function (childsnap) {
+                        if (childsnap.val().email === authResult.user.email) {
                             result = childsnap.val();
                             result.uid = childsnap.key;
                             return true;
                         }
                     });
-                    if(result === undefined){
+                    if (result === undefined) {
                         result = {
-                            displayName: authResult.user.displayName ? authResult.user.displayName : authResult.user.email.split("@").shift(),                         
+                            displayName: authResult.user.displayName ? authResult.user.displayName : authResult.user.email.split("@").shift(),
                             email: authResult.user.email,
                             wins: 0,
                             losses: 0,
@@ -406,7 +408,7 @@ $(document).ready(function () {
                     }
 
                     $("#playerName").html(game.user.displayName ? game.user.displayName : authResult.user.email.split("@").shift());
-                 
+
                 })
 
                 $("#loginArea").hide();
@@ -423,7 +425,8 @@ $(document).ready(function () {
             }
 
         },
-        signInFlow: "popup",
+        accountChooserEnabled: false,
+        // signInFlow: "popup",
         signInSuccessUrl: "/",
         signInOptions: [
             // Leave the lines as is for the providers you want to offer your users.
@@ -431,7 +434,10 @@ $(document).ready(function () {
             // firebase.auth.FacebookAuthProvider.PROVIDER_ID,
             // firebase.auth.TwitterAuthProvider.PROVIDER_ID,
             // firebase.auth.GithubAuthProvider.PROVIDER_ID,
-            firebase.auth.EmailAuthProvider.PROVIDER_ID
+            {
+                provider: firebase.auth.EmailAuthProvider.PROVIDER_ID,
+                requireDisplayName: true
+            }
             // firebase.auth.PhoneAuthProvider.PROVIDER_ID
         ],
         // tosUrl and privacyPolicyUrl accept either url string or a callback
@@ -449,9 +455,9 @@ $(document).ready(function () {
     // The start method will wait until the DOM is loaded.
     ui.start('#firebaseui-auth-container', uiConfig);
 
-  
-    
-  
+
+
+
 
     // $("#loginArea").hide();
 
@@ -471,11 +477,11 @@ $(document).ready(function () {
     //         }).catch(function(err){
     //             console.log(err);
     //         })
-        
+
     //     } else {
     //         ui.start('#firebaseui-auth-container', uiConfig);
     //     }
-         
+
     //  });
     $("#isSolo").click(function (e) {
         game.connect();
@@ -488,9 +494,9 @@ $(document).ready(function () {
     });
 
 
-    if(game.isSolo.checked){
+    if (game.isSolo.checked) {
         game.displayMessages("Playing the AI. Please make a choice.")
-    }else{
+    } else {
         game.setup();
     }
 });
