@@ -1,0 +1,32 @@
+body,
+html {
+    height: 100%;
+}
+
+img {
+    background: black;
+    margin: 1vh auto;
+    height: auto;
+    width: auto;
+    min-width: 20vh;
+    max-width: 150px;
+    min-height: 15vw;
+    max-height: 150px;
+    border-radius: 1rem 2rem;
+    /* clip-path: polygon(10% 0, 100% 20%, 100% 93%, 50% 100%, 0% 93%, 1% 20%); */
+}
+
+.element {
+    box-shadow: 0px 0px 5px 5px #666;
+
+}
+
+.element:active{
+    box-shadow: none;
+}
+
+#board {
+    margin: 0 auto;
+    max-width: 550px;
+}
+
