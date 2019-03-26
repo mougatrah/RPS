@@ -425,7 +425,7 @@ $(document).ready(function () {
             }
 
         },
-        credentialHelper: firebaseui.auth.CredentialHelper.NONE,
+        "credentialHelper": firebaseui.auth.CredentialHelper.NONE,
         accountChooserEnabled: false,
         // signInFlow: "popup",
         signInSuccessUrl: "/",
