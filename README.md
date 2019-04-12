@@ -6,7 +6,7 @@ Built with jQuery and a Firebase database.
 
 ## Multiplayer
 
-1. Go to https://mougatrah.github.io/RPS
+1. Go to https://phelanmccall.github.io/RPS
 
 2. Once 2 players or more are connected, you will be matched with an available player.
 ![joining](./imgs/joining.png)
