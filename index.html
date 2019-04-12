@@ -35,12 +35,12 @@
             <div id="selectArea" class="container-fluid">
                 <div class="row text-center">
                     <div class="col-12">
-                            
-                            <div># of players: <span id="watchers">n/a</span> </div>
 
-                            <small>Vs AI:</small>
-                            <input type="checkbox" id="isSolo" name="isSolo" checked>
-                        
+                        <div># of players: <span id="watchers">n/a</span> </div>
+
+                        <small>Vs AI:</small>
+                        <input type="checkbox" id="isSolo" name="isSolo" checked>
+
                         <div>Choose your move</div>
                     </div>
                 </div>
@@ -65,28 +65,60 @@
                     </div>
                 </div>
                 <div class="text-center">
-                        <div>Result: <span id="winner"></span></div>
-                       
-                        <div id="score">
-                           <small> Wins: Losses: Ties: </small>
-                        </div>
+                    <div>Result: <span id="winner"></span></div>
 
+                    <div id="score">
+                        <small> Wins: Losses: Ties: </small>
                     </div>
+
+                </div>
                 <div class="row justify-content-center">
-                    
+
                     <img src="default.jpg" id="playerDiv" class=""></img>
-                    
+
                     <img src="default.jpg" id="opponentDiv" class=""></img>
                 </div>
             </div>
-        </div>
-        <div id="console">
-                <h3>Console:</h3>
-                <ul id="message">
+
+            <div class="container">
+                    <form> <label>Chat: </label>
+                        <button id="chatBtn">+</button>
+                    </form>
+                    <div class="row justify-content-center">
+                        
+                        <div id="chatBox" style="display: none;" class="border-dark bg-white text-dark col-12 col-md-6 row">
         
-                </ul>
+                            <div class="col-6">
+                                <div>You said:</div>
+                                <div id="playerChat"></div>
+                            </div>
+                            <div class="col-6">
+                                <div>They said:</div>
+                                <div id="opponentChat"></div>
+                            </div>
+                            <form>
+                                <label>Select a message:</label>
+                                <select id="chatForm" type="text">
+                                    <option></option>
+                                </select>
+                            </form>
+        
+                        </div>
+                        <div class="col-12 col-md-6" id="console">
+        
+                            <ul id="message">
+        
+                            </ul>
+        
+                        </div>
+                    </div>
+        
+        
+                </div>
         
         </div>
+    
+    </div>
     </div>
 
 

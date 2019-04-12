@@ -41,6 +41,21 @@ $(document).ready(function () {
         connectedRef: database.ref(".info/connected"),
         timeout: null,
         messages: [],
+        acceptable: [
+            "",
+            "Hello!",
+            "Good luck!",
+            "Thanks!",
+            "Good game!",
+            "Nice streak!",
+            "Whoops!",
+            "RoPoSho!",
+            "Bye!"
+          
+        
+        ],
+        playerChat: $("#playerChat"),
+        opponentChat: $("#opponentChat"),
         playerId: "",
         opponentId: "",
         sessionJoined: false,
@@ -128,7 +143,7 @@ $(document).ready(function () {
                         game.opponentChoice = game.elements[0];
                     }
                     if (!game.opponentHasChosen) {
-                        game.displayMessages("Waiting for opponent's choice...");
+                        game.displayMessages("Waiting for opponent.");
                     } else {
                         game.calc();
                     }
@@ -139,6 +154,11 @@ $(document).ready(function () {
 
         updateScore() {
             if (game.con) {
+                userRef.child(game.user.uid).update({
+                    wins: game.user.wins,
+                    losses: game.user.losses,
+                    ties: game.user.ties,
+                })
                 $("#score").html("<small> Wins: " + game.user.wins + " Losses: " + game.user.losses + " Ties: " + game.user.ties + "</div>");
 
             } else {
@@ -238,8 +258,8 @@ $(document).ready(function () {
                 userRef.child(game.user.uid).update({
                     wins: game.user.wins,
                     losses: game.user.losses,
-                    ties: game.user.ties
-                })
+                    ties: game.user.ties                })
+                
                 game.sessionJoined = false;
                 game.con.remove();
                 game.con = null;
@@ -254,7 +274,8 @@ $(document).ready(function () {
                 } else {
                     game.reset();
                 }
-                game.displayMessages("You are playing the AI. Please make a choice.")
+                game.displayMessages("You are playing the AI.")
+                game.displayMessages("Please make a choice.")
                 game.updateScore();
             } else {
                 if (game.timeout) {
@@ -264,6 +285,16 @@ $(document).ready(function () {
                     game.reset();
                 }
                 game.setup();
+            }
+        },
+
+        updateChat(message) {
+            if (game.con) {
+                console.log(message);
+                game.playerChat.html(message);;
+                game.connectionsRef.child(game.playerId).update({
+                    message: game.playerChat.html()
+                });
             }
         },
 
@@ -278,6 +309,7 @@ $(document).ready(function () {
                     game.user.ties = ties;
                     game.updateScore();
                 });
+               
 
                 game.connectedRef.on("value", function (snap) {
 
@@ -295,7 +327,8 @@ $(document).ready(function () {
                         // Remove user from the connection list when they disconnect.
                         game.con.onDisconnect().remove();
 
-                        game.displayMessages("You connected. Waiting for an opponent...");
+                        game.displayMessages("You connected.");
+                        game.displayMessages("Waiting for an opponent.")
                         game.updateScore();
                         game.playerId = game.con.key;
 
@@ -303,7 +336,7 @@ $(document).ready(function () {
                 });
 
                 game.connectionsRef.on("value", function (snap) {
-                    if (game.sessionJoined == false) {
+                    if (game.sessionJoined === false) {
                         var result;
                         game.displayMessages("Searching for opponent...");
 
@@ -319,15 +352,21 @@ $(document).ready(function () {
                             game.sessionJoined = true;
 
                             if (game.con) {
-                                game.connectionsRef.child(game.playerId).update({
-                                    console: "connected first",
-                                    inSession: game.sessionJoined
-                                });
-
-                                game.connectionsRef.child(result).on("value", function (snap) {
-                                    if (snap.val() && !game.isSolo.checked) {
-
+                               game.con.update({
+                                   sessionJoined: game.sessionJoined
+                               })
+                                game.connectionsRef.child(result).on("value", (snap) => {
+                                    if (snap.val()) {
+                                        console.log(game);
+                                        if (snap.val().message) {
+                                            console.log(snap.val().message)
+                                            game.opponentChat.html(snap.val().message);
+                                        }
                                         game.opponentHasChosen = snap.val().hasChosen;
+                                        if(game.acceptable.includes(snap.val().messages)){
+                                            game.opponentChat.html(snap.val().messages);
+                                        }
+
                                         if (game.opponentHasChosen) {
                                             game.displayMessages("Opponent has chosen.");
                                             if (!game.playerHasChosen) {
@@ -336,13 +375,16 @@ $(document).ready(function () {
                                                 game.calc();
                                             }
                                         }
+
                                     } else {
 
                                         game.opponentId = "";
                                         game.sessionJoined = false;
+                                        game.playerChat.html("");
+                                        game.opponentChat.html("");
                                         if (game.con) {
-                                            game.connectionsRef.child(game.playerId).update({
-                                                console: "disconnected",
+                                            game.con.update({
+                                                opponentDisconnect: true,
                                                 inSession: game.sessionJoined
                                             })
 
@@ -355,8 +397,14 @@ $(document).ready(function () {
                                 });
 
                             }
-                            game.displayMessages("Opponent found. Please make a choice.")
+                            game.displayMessages("Opponent found.")
+                            game.displayMessages("Please make a choice.")
                         } else {
+                            game.opponentId = "";
+                            game.sessionJoined = false;
+                            game.con.update({
+                                sessionJoined: game.sessionJoined
+                            })
                             game.displayMessages("No opponent found.");
                         }
 
@@ -365,10 +413,18 @@ $(document).ready(function () {
                     // The number of online users is the number of children in the connections list.
                     $("#watchers").text(snap.numChildren());
                 });
-
+           
+            
+                $("#chatForm").html(game.acceptable.map(function(val){
+                    return `<option>${val}</option>`
+                }).join(""));
+                
+    
             } else {
-                game.displayMessages("Can't connect. No user logged in...");
-                game.displayMessages("Playing the AI. Please make a choice.");
+                game.displayMessages("Can't connect.");
+                game.displayMessages("No user logged in.");
+                game.displayMessages("Playing the AI.");
+                game.displayMessages("Please make a choice.");
                 game.isSolo.click();
                 game.updateScore();
             }
@@ -485,7 +541,7 @@ $(document).ready(function () {
 
     //  });
     $("#isSolo").click(function (e) {
-        game.connect();
+       game.connect();
     })
 
     $(".element").click(function (e) {
@@ -494,10 +550,29 @@ $(document).ready(function () {
         game.update($(this).attr("data-value"));
     });
 
+    $("#chatBtn").click(function (e) {
+        e.preventDefault();
+        if (e.target.innerHTML === "+") {
+            $("#chatBox").show();
+            e.target.innerHTML = "-"
+        } else {
+            $("#chatBox").hide();
+            e.target.innerHTML = "+";
+        }
+    })
+
+    $("#chatForm").on("change", function (e) {
+        e.preventDefault();
+        console.log(e.target.value)
+        game.updateChat(e.target.value);
+
+    })
 
     if (game.isSolo.checked) {
-        game.displayMessages("Playing the AI. Please make a choice.")
+        game.displayMessages("Playing the AI.")
+        game.displayMessages("Please make a choice.")
     } else {
         game.setup();
     }
+
 });
