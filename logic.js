@@ -99,6 +99,11 @@ $(document).ready(function () {
                     choice: game.playerChoice,
                     hasChosen: game.playerHasChosen
                 })
+                game.con.once("value", (snap) => {
+                    if (!snap.val().user) {
+                        game.con.remove();
+                    }
+                })
             }
             game.gameOver = false;
 
@@ -141,6 +146,11 @@ $(document).ready(function () {
                             choice: game.playerChoice,
                             hasChosen: game.playerHasChosen
                         });
+                        game.con.once("value", (snap) => {
+                            if (!snap.val().user) {
+                                game.con.remove();
+                            }
+                        })
 
                     } else {
                         game.opponentChoice = game.elements[0];
@@ -404,7 +414,11 @@ $(document).ready(function () {
                                             message: "",
                                             inSession: game.sessionJoined
                                         })
-
+                                        game.con.once("value", (snap) => {
+                                            if (!snap.val().user) {
+                                                game.con.remove();
+                                            }
+                                        })
 
 
                                     }
