@@ -29,3 +29,8 @@ img {
     margin: 0 auto;
     max-width: 550px;
 }
+
+#footer {
+    position: absolute;
+    bottom: 0;
+}
